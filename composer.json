@@ -1,0 +1,21 @@
+{
+    "name": "thelostasura/skynet",
+    "authors": [
+        {
+            "name": "suabahasa",
+            "email": "mail@thelostasura.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "TheLostAsura\\Skynet\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TheLostAsura\\Skynet\\ServiceProvider"
+            ]
+        }
+    }
+}
