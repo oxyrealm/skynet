@@ -27,11 +27,14 @@ class Setup {
 
 	public static function install( $network_wide = false ) {
 		if ( is_multisite() && $network_wide ) {
-			foreach ( MultiSite::blogs() as $blog ) {
-				switch_to_blog( $blog->blog_id );
-				self::doInstallation();
-				restore_current_blog();
-			}
+			wp_die(
+				'Sorry, network activation is not available, please activate asura plugin per site', 
+				'Per site only',  
+				array( 
+					'response' => 403, 
+					'back_link' => true 
+				)
+			);
 		} else {
 			self::doInstallation();
 		}
