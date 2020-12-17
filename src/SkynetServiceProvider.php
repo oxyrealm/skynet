@@ -39,6 +39,5 @@ class SkynetServiceProvider extends ServiceProvider {
 
 			$this->app->make( License::class );
 		}
-
 	}
 }

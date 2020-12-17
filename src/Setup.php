@@ -19,10 +19,27 @@ class Setup {
 		update_option( 'active_plugins', $active_plugins );
 	}
 
-	public static function install() {
+	public static function install( $network_wide = false ) {
 		add_action( 'activated_plugin', [ Setup::class, 'lastPluginOrder' ] );
 		self::migrate();
 		ob_start();
+
+
+		// if ( is_multisite() && $network_wide ) {
+
+		// 	foreach ( $wpdb->get_col( "SELECT blog_id FROM $wpdb->blogs LIMIT 100" ) as $blog_id ) {
+	
+		// 		switch_to_blog( $blog_id );
+		// 		edd_run_install();
+		// 		restore_current_blog();
+	
+		// 	}
+	
+		// } else {
+	
+		// 	edd_run_install();
+	
+		// }
 	}
 
 	public static function deactivate() {
