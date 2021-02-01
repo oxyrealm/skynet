@@ -77,14 +77,15 @@ class License {
 			'timeout'   => 15,
 			'sslverify' => false,
 			'body'      => [
-				'edd_action' => $action,
-				'license'    => $this->options['license'] ?? '',
-				'item_id'    => $this->options['item_id'] ?? false,
-				'version'    => $this->options['version'] ?? false,
-				'slug'       => basename( ASURA_PLUGIN_FILE, '.php' ),
-				'author'     => $this->options['author'],
-				'url'        => home_url(),
-				'beta'       => $this->options['beta'] ?? false,
+				'edd_action'  => $action,
+				'license'     => $this->options['license'] ?? '',
+				'item_id'     => $this->options['item_id'] ?? false,
+				'version'     => $this->options['version'] ?? false,
+				'slug'        => basename( ASURA_PLUGIN_FILE, '.php' ),
+				'author'      => $this->options['author'],
+				'url'         => home_url(),
+				'beta'        => $this->options['beta'] ?? false,
+				'environment' => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production',
 			]
 		] );
 	}
