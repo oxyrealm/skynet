@@ -7,6 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class License {
+	private const UNREGISTERED_MSG = 'Your installed Asura is unregistered';
 	private $options = [];
 
 	public function __construct( array $options ) {
@@ -56,40 +57,6 @@ class License {
 		return Cache::put( 'license', $license_data, Carbon::now()->addDay() );
 	}
 
-	public function deactivate() {
-		Cache::forget( 'license' );
-
-		return $this->apiRequest( 'deactivate_license' );
-	}
-
-	public function activate( ?string $license ) {
-		if ( $license ) {
-			$this->options['license'] = $license;
-		}
-
-		Cache::forget( 'license' );
-
-		return $this->apiRequest( 'activate_license' );
-	}
-
-	private function apiRequest( $action ) {
-		return wp_remote_post( $this->options['protocol'], [
-			'timeout'   => 15,
-			'sslverify' => false,
-			'body'      => [
-				'edd_action'  => $action,
-				'license'     => $this->options['license'] ?? '',
-				'item_id'     => $this->options['item_id'] ?? false,
-				'version'     => $this->options['version'] ?? false,
-				'slug'        => basename( ASURA_PLUGIN_FILE, '.php' ),
-				'author'      => $this->options['author'],
-				'url'         => home_url(),
-				'beta'        => $this->options['beta'] ?? false,
-				'environment' => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production',
-			]
-		] );
-	}
-
 	public static function errorMessage( $msgcode ) {
 		switch ( $msgcode ) {
 			case 'expired' :
@@ -114,5 +81,37 @@ class License {
 		}
 	}
 
-	private const UNREGISTERED_MSG = 'Your installed Asura is unregistered';
+	private function apiRequest( $action ) {
+		return wp_remote_post( $this->options['protocol'], [
+			'timeout'   => 15,
+			'sslverify' => false,
+			'body'      => [
+				'edd_action'  => $action,
+				'license'     => $this->options['license'] ?? '',
+				'item_id'     => $this->options['item_id'] ?? false,
+				'version'     => $this->options['version'] ?? false,
+				'slug'        => basename( ASURA_PLUGIN_FILE, '.php' ),
+				'author'      => $this->options['author'],
+				'url'         => home_url(),
+				'beta'        => $this->options['beta'] ?? false,
+				'environment' => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production',
+			]
+		] );
+	}
+
+	public function deactivate() {
+		Cache::forget( 'license' );
+
+		return $this->apiRequest( 'deactivate_license' );
+	}
+
+	public function activate( ?string $license ) {
+		if ( $license ) {
+			$this->options['license'] = $license;
+		}
+
+		Cache::forget( 'license' );
+
+		return $this->apiRequest( 'activate_license' );
+	}
 }

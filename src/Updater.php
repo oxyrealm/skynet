@@ -125,7 +125,7 @@ class Updater {
 	 * Get repo API data from store.
 	 * Save to cache.
 	 *
-	 * @return \stdClass
+	 * @return stdClass
 	 */
 	public function get_repo_api_data() {
 		$version_info = $this->get_cached_version_info();
@@ -150,6 +150,166 @@ class Updater {
 		}
 
 		return $version_info;
+	}
+
+	/**
+	 * Gets the plugin's cached version information from the database.
+	 *
+	 * @param string $cache_key
+	 *
+	 * @return boolean|string
+	 */
+	public function get_cached_version_info( $cache_key = '' ) {
+
+		if ( empty( $cache_key ) ) {
+			$cache_key = $this->cache_key;
+		}
+
+		$cache = get_option( $cache_key );
+
+		if ( empty( $cache['timeout'] ) || time() > $cache['timeout'] ) {
+			return false; // Cache is expired
+		}
+
+		// We need to turn the icons into an array, thanks to WP Core forcing these into an object at some point.
+		$cache['value'] = json_decode( $cache['value'] );
+		if ( ! empty( $cache['value']->icons ) ) {
+			$cache['value']->icons = (array) $cache['value']->icons;
+		}
+
+		return $cache['value'];
+
+	}
+
+	/**
+	 * Calls the API and, if successfull, returns the object delivered by the API.
+	 *
+	 * @param string $_action The requested action.
+	 * @param array $_data Parameters for the API action.
+	 *
+	 * @return false|object
+	 * @uses get_bloginfo()
+	 * @uses wp_remote_post()
+	 * @uses is_wp_error()
+	 *
+	 */
+	private function api_request( $_action, $_data ) {
+
+		global $wp_version, $edd_plugin_url_available;
+
+		$verify_ssl = $this->verify_ssl();
+
+		// Do a quick status check on this domain if we haven't already checked it.
+		$store_hash = md5( $this->api_url );
+		if ( ! is_array( $edd_plugin_url_available ) || ! isset( $edd_plugin_url_available[ $store_hash ] ) ) {
+			$test_url_parts = parse_url( $this->api_url );
+
+			$scheme = ! empty( $test_url_parts['scheme'] ) ? $test_url_parts['scheme'] : 'http';
+			$host   = ! empty( $test_url_parts['host'] ) ? $test_url_parts['host'] : '';
+			$port   = ! empty( $test_url_parts['port'] ) ? ':' . $test_url_parts['port'] : '';
+
+			if ( empty( $host ) ) {
+				$edd_plugin_url_available[ $store_hash ] = false;
+			} else {
+				$test_url                                = $scheme . '://' . $host . $port;
+				$response                                = wp_remote_get( $test_url, array(
+					'timeout'   => $this->health_check_timeout,
+					'sslverify' => $verify_ssl
+				) );
+				$edd_plugin_url_available[ $store_hash ] = is_wp_error( $response ) ? false : true;
+			}
+		}
+
+		if ( false === $edd_plugin_url_available[ $store_hash ] ) {
+			return false;
+		}
+
+		$data = array_merge( $this->api_data, $_data );
+
+		if ( $data['slug'] != $this->slug ) {
+			return false;
+		}
+
+		if ( $this->api_url == trailingslashit( home_url() ) ) {
+			return false; // Don't allow a plugin to ping itself
+		}
+
+		$api_params = array(
+			'edd_action' => 'get_version',
+			'license'    => ! empty( $data['license'] ) ? $data['license'] : '',
+			'item_name'  => isset( $data['item_name'] ) ? $data['item_name'] : false,
+			'item_id'    => isset( $data['item_id'] ) ? $data['item_id'] : false,
+			'version'    => isset( $data['version'] ) ? $data['version'] : false,
+			'slug'       => $data['slug'],
+			'author'     => $data['author'],
+			'url'        => home_url(),
+			'beta'       => ! empty( $data['beta'] ),
+		);
+
+		$request = wp_remote_post( $this->api_url, array(
+			'timeout'   => 15,
+			'sslverify' => $verify_ssl,
+			'body'      => $api_params
+		) );
+
+		if ( ! is_wp_error( $request ) ) {
+			$request = json_decode( wp_remote_retrieve_body( $request ) );
+		}
+
+		if ( $request && isset( $request->sections ) ) {
+			$request->sections = maybe_unserialize( $request->sections );
+		} else {
+			$request = false;
+		}
+
+		if ( $request && isset( $request->banners ) ) {
+			$request->banners = maybe_unserialize( $request->banners );
+		}
+
+		if ( $request && isset( $request->icons ) ) {
+			$request->icons = maybe_unserialize( $request->icons );
+		}
+
+		if ( ! empty( $request->sections ) ) {
+			foreach ( $request->sections as $key => $section ) {
+				$request->$key = (array) $section;
+			}
+		}
+
+		return $request;
+	}
+
+	/**
+	 * Returns if the SSL of the store should be verified.
+	 *
+	 * @return bool
+	 * @since  1.6.13
+	 */
+	private function verify_ssl() {
+		return (bool) apply_filters( 'edd_sl_api_request_verify_ssl', true, $this );
+	}
+
+	/**
+	 * Adds the plugin version information to the database.
+	 *
+	 * @param string $value
+	 * @param string $cache_key
+	 */
+	public function set_version_info_cache( $value = '', $cache_key = '' ) {
+
+		if ( empty( $cache_key ) ) {
+			$cache_key = $this->cache_key;
+		}
+
+		$data = array(
+			'timeout' => strtotime( '+3 hours', time() ),
+			'value'   => json_encode( $value )
+		);
+
+		update_option( $cache_key, $data, 'no' );
+
+		// Delete the duplicate option
+		delete_option( 'edd_api_request_' . md5( serialize( $this->slug . $this->api_data['license'] . $this->beta ) ) );
 	}
 
 	/**
@@ -275,6 +435,27 @@ class Updater {
 	}
 
 	/**
+	 * Convert some objects to arrays when injecting data into the update API
+	 *
+	 * Some data like sections, banners, and icons are expected to be an associative array, however due to the JSON
+	 * decoding, they are objects. This method allows us to pass in the object and return an associative array.
+	 *
+	 * @param stdClass $data
+	 *
+	 * @return array
+	 * @since 3.6.5
+	 *
+	 */
+	private function convert_object_to_array( $data ) {
+		$new_data = array();
+		foreach ( $data as $key => $value ) {
+			$new_data[ $key ] = is_object( $value ) ? $this->convert_object_to_array( $value ) : $value;
+		}
+
+		return $new_data;
+	}
+
+	/**
 	 * Updates information on the "View version x.x details" page with custom data.
 	 *
 	 * @param mixed $_data
@@ -356,27 +537,6 @@ class Updater {
 	}
 
 	/**
-	 * Convert some objects to arrays when injecting data into the update API
-	 *
-	 * Some data like sections, banners, and icons are expected to be an associative array, however due to the JSON
-	 * decoding, they are objects. This method allows us to pass in the object and return an associative array.
-	 *
-	 * @param stdClass $data
-	 *
-	 * @return array
-	 * @since 3.6.5
-	 *
-	 */
-	private function convert_object_to_array( $data ) {
-		$new_data = array();
-		foreach ( $data as $key => $value ) {
-			$new_data[ $key ] = is_object( $value ) ? $this->convert_object_to_array( $value ) : $value;
-		}
-
-		return $new_data;
-	}
-
-	/**
 	 * Disable SSL verification in order to prevent download update failures
 	 *
 	 * @param array $args
@@ -393,104 +553,6 @@ class Updater {
 
 		return $args;
 
-	}
-
-	/**
-	 * Calls the API and, if successfull, returns the object delivered by the API.
-	 *
-	 * @param string $_action The requested action.
-	 * @param array $_data Parameters for the API action.
-	 *
-	 * @return false|object
-	 * @uses get_bloginfo()
-	 * @uses wp_remote_post()
-	 * @uses is_wp_error()
-	 *
-	 */
-	private function api_request( $_action, $_data ) {
-
-		global $wp_version, $edd_plugin_url_available;
-
-		$verify_ssl = $this->verify_ssl();
-
-		// Do a quick status check on this domain if we haven't already checked it.
-		$store_hash = md5( $this->api_url );
-		if ( ! is_array( $edd_plugin_url_available ) || ! isset( $edd_plugin_url_available[ $store_hash ] ) ) {
-			$test_url_parts = parse_url( $this->api_url );
-
-			$scheme = ! empty( $test_url_parts['scheme'] ) ? $test_url_parts['scheme'] : 'http';
-			$host   = ! empty( $test_url_parts['host'] ) ? $test_url_parts['host'] : '';
-			$port   = ! empty( $test_url_parts['port'] ) ? ':' . $test_url_parts['port'] : '';
-
-			if ( empty( $host ) ) {
-				$edd_plugin_url_available[ $store_hash ] = false;
-			} else {
-				$test_url                                = $scheme . '://' . $host . $port;
-				$response                                = wp_remote_get( $test_url, array(
-					'timeout'   => $this->health_check_timeout,
-					'sslverify' => $verify_ssl
-				) );
-				$edd_plugin_url_available[ $store_hash ] = is_wp_error( $response ) ? false : true;
-			}
-		}
-
-		if ( false === $edd_plugin_url_available[ $store_hash ] ) {
-			return false;
-		}
-
-		$data = array_merge( $this->api_data, $_data );
-
-		if ( $data['slug'] != $this->slug ) {
-			return false;
-		}
-
-		if ( $this->api_url == trailingslashit( home_url() ) ) {
-			return false; // Don't allow a plugin to ping itself
-		}
-
-		$api_params = array(
-			'edd_action' => 'get_version',
-			'license'    => ! empty( $data['license'] ) ? $data['license'] : '',
-			'item_name'  => isset( $data['item_name'] ) ? $data['item_name'] : false,
-			'item_id'    => isset( $data['item_id'] ) ? $data['item_id'] : false,
-			'version'    => isset( $data['version'] ) ? $data['version'] : false,
-			'slug'       => $data['slug'],
-			'author'     => $data['author'],
-			'url'        => home_url(),
-			'beta'       => ! empty( $data['beta'] ),
-		);
-
-		$request = wp_remote_post( $this->api_url, array(
-			'timeout'   => 15,
-			'sslverify' => $verify_ssl,
-			'body'      => $api_params
-		) );
-
-		if ( ! is_wp_error( $request ) ) {
-			$request = json_decode( wp_remote_retrieve_body( $request ) );
-		}
-
-		if ( $request && isset( $request->sections ) ) {
-			$request->sections = maybe_unserialize( $request->sections );
-		} else {
-			$request = false;
-		}
-
-		if ( $request && isset( $request->banners ) ) {
-			$request->banners = maybe_unserialize( $request->banners );
-		}
-
-		if ( $request && isset( $request->icons ) ) {
-			$request->icons = maybe_unserialize( $request->icons );
-		}
-
-		if ( ! empty( $request->sections ) ) {
-			foreach ( $request->sections as $key => $section ) {
-				$request->$key = (array) $section;
-			}
-		}
-
-		return $request;
 	}
 
 	/**
@@ -568,68 +630,6 @@ class Updater {
 		}
 
 		exit;
-	}
-
-	/**
-	 * Gets the plugin's cached version information from the database.
-	 *
-	 * @param string $cache_key
-	 *
-	 * @return boolean|string
-	 */
-	public function get_cached_version_info( $cache_key = '' ) {
-
-		if ( empty( $cache_key ) ) {
-			$cache_key = $this->cache_key;
-		}
-
-		$cache = get_option( $cache_key );
-
-		if ( empty( $cache['timeout'] ) || time() > $cache['timeout'] ) {
-			return false; // Cache is expired
-		}
-
-		// We need to turn the icons into an array, thanks to WP Core forcing these into an object at some point.
-		$cache['value'] = json_decode( $cache['value'] );
-		if ( ! empty( $cache['value']->icons ) ) {
-			$cache['value']->icons = (array) $cache['value']->icons;
-		}
-
-		return $cache['value'];
-
-	}
-
-	/**
-	 * Adds the plugin version information to the database.
-	 *
-	 * @param string $value
-	 * @param string $cache_key
-	 */
-	public function set_version_info_cache( $value = '', $cache_key = '' ) {
-
-		if ( empty( $cache_key ) ) {
-			$cache_key = $this->cache_key;
-		}
-
-		$data = array(
-			'timeout' => strtotime( '+3 hours', time() ),
-			'value'   => json_encode( $value )
-		);
-
-		update_option( $cache_key, $data, 'no' );
-
-		// Delete the duplicate option
-		delete_option( 'edd_api_request_' . md5( serialize( $this->slug . $this->api_data['license'] . $this->beta ) ) );
-	}
-
-	/**
-	 * Returns if the SSL of the store should be verified.
-	 *
-	 * @return bool
-	 * @since  1.6.13
-	 */
-	private function verify_ssl() {
-		return (bool) apply_filters( 'edd_sl_api_request_verify_ssl', true, $this );
 	}
 
 	public function purge() {
