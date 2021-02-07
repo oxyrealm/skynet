@@ -13,12 +13,12 @@ class DiagnosticData {
 	private static function collectData() {
 		global $wpdb;
 
-		if (
-			! function_exists( 'get_plugins' )
-			|| ! function_exists( 'get_plugin_updates' )
-		) {
-			includeFile( ABSPATH . 'wp-admin/includes/update.php' );
+		if ( ! function_exists( 'get_plugins' ) ) {
 			includeFile( ABSPATH . 'wp-admin/includes/plugin.php' );
+		}
+
+		if ( ! function_exists( 'get_plugin_updates' ) ) {
+			includeFile( ABSPATH . 'wp-admin/includes/update.php' );
 		}
 
 		$plugin_updates = get_plugin_updates();

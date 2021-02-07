@@ -3,6 +3,7 @@
 namespace TheLostAsura\Skynet;
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
 class Setup {
@@ -37,6 +38,8 @@ class Setup {
 	}
 
 	public static function migrate() {
+		Cache::flush();
+
 		if ( ! self::isInstalled() ) {
 			Schema::dropIfExists( config( 'database.migrations' ) );
 		}
@@ -57,6 +60,7 @@ class Setup {
 	}
 
 	public static function deactivate() {
+		Cache::flush();
 	}
 
 	public static function uninstall() {

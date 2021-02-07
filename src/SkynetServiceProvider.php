@@ -15,7 +15,6 @@ class SkynetServiceProvider extends ServiceProvider {
 
 	public function boot() {
 		if ( Setup::isInstalled() ) {
-
 			if ( Comparator::lessThan( get_option( 'asura_installed' ), THELOSTASURA ) ) {
 				Setup::migrate();
 			}
