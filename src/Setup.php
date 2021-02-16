@@ -64,12 +64,12 @@ class Setup {
 	}
 
 	public static function uninstall() {
-		if ( config( 'database.uninstall', false ) ) {
+		// if ( config( 'database.uninstall', false ) ) {
 			Artisan::call( 'migrate:reset', [
 				'--force' => true,
 			] );
 			Schema::dropIfExists( config( 'database.migrations' ) );
-		}
+		// }
 	}
 
 	public static function updater() {
