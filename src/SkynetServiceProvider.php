@@ -17,10 +17,10 @@ class SkynetServiceProvider extends ServiceProvider {
 	public function boot() {
 		if ( Setup::isInstalled() ) {
 			if ( Comparator::lessThan( get_option( 'asura_installed' ), THELOSTASURA ) ) {
-				Log::info('upgrading_database', [
+				Log::info( 'upgrading_database', [
 					'installed_version' => get_option( 'asura_installed' ),
-					'upgrade_version' => THELOSTASURA,
-				]);
+					'upgrade_version'   => THELOSTASURA,
+				] );
 				Setup::migrate();
 			}
 
