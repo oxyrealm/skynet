@@ -21,6 +21,7 @@ class SkynetServiceProvider extends ServiceProvider {
 					'installed_version' => get_option( 'asura_installed' ),
 					'upgrade_version'   => THELOSTASURA,
 				] );
+				
 				Setup::migrate();
 			}
 

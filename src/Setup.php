@@ -64,12 +64,13 @@ class Setup {
 	}
 
 	public static function uninstall() {
-		// if ( config( 'database.uninstall', false ) ) {
+		delete_option( 'asura_installed' );
+
 		Artisan::call( 'migrate:reset', [
 			'--force' => true,
 		] );
+		
 		Schema::dropIfExists( config( 'database.migrations' ) );
-		// }
 	}
 
 	public static function updater() {
