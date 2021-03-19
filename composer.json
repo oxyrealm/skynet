@@ -1,9 +1,9 @@
 {
-    "name": "thelostasura/skynet",
+    "name": "oxyrealm/skynet",
     "authors": [
         {
-            "name": "suabahasa",
-            "email": "mail@thelostasura.com"
+            "name": "oxyrealm",
+            "email": "hello@oxyrealm.com"
         }
     ],
     "autoload": {
