@@ -52,7 +52,7 @@ class Setup {
 			'--force' => true,
 		] );
 
-		update_option( 'asura_installed', THELOSTASURA );
+		update_option( 'asura_installed', ASURA_VERSION );
 	}
 
 	public static function isInstalled() {

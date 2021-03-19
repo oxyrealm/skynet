@@ -16,10 +16,10 @@ class SkynetServiceProvider extends ServiceProvider {
 
 	public function boot() {
 		if ( Setup::isInstalled() ) {
-			if ( Comparator::lessThan( get_option( 'asura_installed' ), THELOSTASURA ) ) {
+			if ( Comparator::lessThan( get_option( 'asura_installed' ), ASURA_VERSION ) ) {
 				Log::info( 'upgrading_database', [
 					'installed_version' => get_option( 'asura_installed' ),
-					'upgrade_version'   => THELOSTASURA,
+					'upgrade_version'   => ASURA_VERSION,
 				] );
 				
 				Setup::migrate();
@@ -30,7 +30,7 @@ class SkynetServiceProvider extends ServiceProvider {
 			$setting = app( SkynetSettings::class );
 
 			$payload = [
-				'version' => THELOSTASURA,
+				'version' => ASURA_VERSION,
 				'license' => $setting->license,
 				'item_id' => $skynet['id'],
 				'author'  => $skynet['commander'],
