@@ -5,13 +5,14 @@ namespace TheLostAsura\Skynet;
 use stdClass;
 
 class Updater {
-	private $api_url = '';
-	private $api_data = [];
-	private $name = '';
-	private $slug = '';
-	private $version = '';
-	private $wp_override = false;
-	private $cache_key = '';
+	private $api_url              = '';
+	private $api_data             = [];
+	private $name                 = '';
+	private $slug                 = '';
+	private $version              = '';
+	private $wp_override          = false;
+	private $cache_key            = '';
+	private $beta                 = false;
 
 	private $health_check_timeout = 5;
 
@@ -447,6 +448,9 @@ class Updater {
 	 *
 	 */
 	private function convert_object_to_array( $data ) {
+		if ( ! is_array( $data ) && ! is_object( $data ) ) {
+			return array();
+		}
 		$new_data = array();
 		foreach ( $data as $key => $value ) {
 			$new_data[ $key ] = is_object( $value ) ? $this->convert_object_to_array( $value ) : $value;
