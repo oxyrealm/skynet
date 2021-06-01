@@ -2,7 +2,7 @@
 
 namespace Oxyrealm\Skynet;
 
-use Asura\Settings\SkynetSettings;
+use Oxyrealm\Asura\Settings\SkynetSettings;
 use Composer\Semver\Comparator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;

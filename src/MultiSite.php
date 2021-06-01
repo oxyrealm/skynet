@@ -2,7 +2,7 @@
 
 namespace Oxyrealm\Skynet;
 
-use Asura\Models\Blog;
+use Oxyrealm\Asura\Models\Blog;
 
 class MultiSite {
 	public static function isMultiSite(): bool {

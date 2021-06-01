@@ -2,7 +2,7 @@
 
 namespace Oxyrealm\Skynet;
 
-use Asura\Integration\WordPress\Notice;
+use Oxyrealm\Asura\Integration\WordPress\Notice;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
