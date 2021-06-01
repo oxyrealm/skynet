@@ -2,9 +2,9 @@
 
 namespace Oxyrealm\Skynet;
 
-use Oxyrealm\Asura\Integration\WordPress\Notice;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Oxyrealm\Aether\Utils\Notice;
 
 class License {
 	private const UNREGISTERED_MSG = 'Your installed Asura is unregistered';

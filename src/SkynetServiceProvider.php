@@ -6,6 +6,7 @@ use Oxyrealm\Asura\Settings\SkynetSettings;
 use Composer\Semver\Comparator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Oxyrealm\Aether\Utils\Updater;
 
 class SkynetServiceProvider extends ServiceProvider {
 	public function register() {
