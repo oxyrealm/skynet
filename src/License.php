@@ -1,6 +1,6 @@
 <?php
 
-namespace TheLostAsura\Skynet;
+namespace Oxyrealm\Skynet;
 
 use Asura\Integration\WordPress\Notice;
 use Illuminate\Support\Carbon;

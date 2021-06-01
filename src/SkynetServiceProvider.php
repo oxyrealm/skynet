@@ -1,6 +1,6 @@
 <?php
 
-namespace TheLostAsura\Skynet;
+namespace Oxyrealm\Skynet;
 
 use Asura\Settings\SkynetSettings;
 use Composer\Semver\Comparator;

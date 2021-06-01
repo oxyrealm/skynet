@@ -1,6 +1,6 @@
 <?php
 
-namespace TheLostAsura\Skynet;
+namespace Oxyrealm\Skynet;
 
 use function Composer\Autoload\includeFile;
 
