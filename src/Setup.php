@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\Schema;
 
 class Setup {
 	public static function lastPluginOrder() {
-		$asura          = plugin_basename( ASURA_PLUGIN_FILE );
-		$active_plugins = get_option( 'active_plugins' );
-		$asura_index    = array_search( $asura, $active_plugins );
-		array_splice( $active_plugins, $asura_index, 1 );
-		array_push( $active_plugins, $asura );
-		update_option( 'active_plugins', $active_plugins );
+		if ( defined('CT_PLUGIN_MAIN_FILE') ) {
+			$oxygen          = plugin_basename( CT_PLUGIN_MAIN_FILE );
+			$active_plugins  = get_option( 'active_plugins' );
+			$oxygen_index    = array_search( $oxygen, $active_plugins );
+			array_splice( $active_plugins, $oxygen_index, 1 );
+			array_unshift( $active_plugins, $oxygen );
+			update_option( 'active_plugins', $active_plugins );
+		}
 	}
 
 	public static function install( $network_wide = false ) {
