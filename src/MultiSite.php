@@ -20,4 +20,18 @@ class MultiSite {
 	public static function blogs() {
 		return Blog::all();
 	}
+
+	public static function getAdminRouteUuid() {
+		$uuid = get_option( 'asura_admin_route_uuid' );
+
+		if ( ! wp_is_uuid($uuid) ) {
+			$uuid = static::setAdminRouteUuid();
+		}
+
+		return $uuid;
+	}
+
+	public static function setAdminRouteUuid() {
+		update_option( 'asura_admin_route_uuid', wp_generate_uuid4() )
+	}
 }

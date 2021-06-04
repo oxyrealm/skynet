@@ -36,6 +36,7 @@ class Setup {
 	public static function doInstallation() {
 		add_action( 'activated_plugin', [ Setup::class, 'lastPluginOrder' ] );
 		self::migrate();
+		MultiSite::setAdminRouteUuid();
 		ob_start();
 	}
 
