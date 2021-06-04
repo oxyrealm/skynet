@@ -32,6 +32,6 @@ class MultiSite {
 	}
 
 	public static function setAdminRouteUuid() {
-		update_option( 'asura_admin_route_uuid', wp_generate_uuid4() )
+		update_option( 'asura_admin_route_uuid', wp_generate_uuid4() );
 	}
 }
