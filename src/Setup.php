@@ -5,6 +5,7 @@ namespace Oxyrealm\Skynet;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
+use Oxyrealm\Aether\Utils\Updater;
 
 class Setup {
 	public static function lastPluginOrder() {
